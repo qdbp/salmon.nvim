@@ -28,6 +28,9 @@ function M.build_from_palette(palette)
     text_lowkey = c.fg_light,
     text = c.fg,
     text_focus = c.black,
+
+    nav_file = c.fg_dark,
+    nav_dir = c.pri_5,
   }
 
   -- *** SEMANTIC HIGHLIGHTING (SCHEME) ***
@@ -299,7 +302,7 @@ function M.build_from_palette(palette)
     ["@diff.minus"] = { bg = c.hl_2 },
 
     -- file navigation
-    Directory = { fg = c.pri_5 },
+    Directory = { fg = sem.nav_dir },
 
     -- markdown et al
     Title = { fg = c.black, bold = true },
@@ -430,9 +433,9 @@ function M.build_from_palette(palette)
     DapUIModifiedValue = { fg = c.pri_4, bold = true },
     DapUIDecoration = { fg = c.pri_4 },
     DapUIThread = { fg = c.pri_3 },
-    DapUIStoppedThread = { fg = c.pri_4 },
+    DapUIStoppedThread = { fg = c.tone_2 },
     DapUIFrameName = "Normal",
-    DapUISource = { fg = c.pri_0 },
+    DapUISource = { fg = sem.nav_file },
     DapUILineNumber = { fg = c.tint_1 },
     DapUIBreakpointsLine = "DapUILineNumber",
     DapUIFloatNormal = "NormalFloat",
