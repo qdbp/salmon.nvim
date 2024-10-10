@@ -28,9 +28,12 @@ function M.build_from_palette(palette)
     text_lowkey = c.fg_light,
     text = c.fg,
     text_focus = c.black,
+    text_tag = c.tone_5, -- labels, identifiers, enums
+    text_tag_alt = c.tone_1, -- alternate tag when several types of tags are present
 
     nav_file = c.fg_dark,
     nav_dir = c.pri_5,
+    nav_guide_lowkey = c.tint_0, -- deemphasized guides: aligners, indices into text, etc.
   }
 
   -- *** SEMANTIC HIGHLIGHTING (SCHEME) ***
@@ -217,6 +220,16 @@ function M.build_from_palette(palette)
     ["@punctuation.delimiter.python"] = "@lsp.type.keyword", -- needs this weight
     -- TODO need a general solution for this `@spell` issue...
     ["@spell.python"] = "Comment",
+
+    -- yaml
+    ["@property.yaml"] = { fg = c.black },
+    ["@string.yaml"] = { fg = c.tone_3 },
+
+    -- zsh
+    zshDeref = "@lsp.type.parameter",
+    zshString = "String",
+    zshStringDelimeter = "String",
+    zshPOSIXString = "String",
   }
 
   -- THEME: styling the window and non-code elements
@@ -249,10 +262,10 @@ function M.build_from_palette(palette)
     LineNr = { fg = c.fg_light, bg = c.bg_3 },
     CursorLine = { bg = c.wht_4 },
     CursorLineNR = { fg = c.tone_1, bg = c.bg_3, bold = true },
-    FoldColumn = { fg = c.tint_1, bg = c.bg_3 },
+    FoldColumn = { fg = sem.nav_guide_lowkey, bg = c.bg_3 },
     SignColumn = { link = "FoldColumn" },
     -- create new generic group that any plugin can be configured to use
-    IndentGuide = { fg = c.tint_2 },
+    IndentGuide = { fg = sem.nav_guide_lowkey },
 
     -- top of screen
     TabLineFill = { bg = c.bg_3, fg = c.fg },
@@ -271,7 +284,7 @@ function M.build_from_palette(palette)
 
     -- selection, folded, search and match highlights
     Visual = { bg = c.hl_0 },
-    Folded = { fg = c.fg_light, bg = c.hlbg_7 },
+    Folded = { fg = c.fg_light, bg = c.bg_7 },
     MatchParen = { bg = c.hl_7 },
     Search = { bg = c.hl_4 },
 
@@ -304,11 +317,11 @@ function M.build_from_palette(palette)
     -- file navigation
     Directory = { fg = sem.nav_dir },
 
-    -- markdown et al
+    -- Markdown et al
+    ["@markup.raw"] = { bg = c.wht_7 }, -- stop the garishness!
     Title = { fg = c.black, bold = true },
-    -- TODO group these better
     Question = { fg = c.ult_5 },
-    RenderMarkdownCode = { bg = c.wht_1 },
+    RenderMarkdownCode = { bg = c.wht_7 },
   }
 
   -- PLUGIN SPECIFIC
@@ -356,8 +369,16 @@ function M.build_from_palette(palette)
 
   -- neogit
   H.neogit_highlights = {
-    NeogitBranch = { fg = c.pri_5 },
-    NeogitBranchHead = { fg = c.pri_5, bold = true, underline = true },
+    -- branch-like
+    NeogitBranch = { fg = c.black, underline = true },
+    NeogitRemote = { fg = c.tone_2, underline = true },
+    NeogitBranchHead = { fg = c.black, underline = true },
+    NeogitTagName = { fg = sem.text_tag },
+
+    -- object-like
+    -- TODO factor common git items out to share with e.g. blame
+    NeogitObjectId = { fg = sem.text_tag_alt },
+
     NeogitChangeAdded = { fg = c.pri_3, bold = true, italic = true },
     NeogitChangeCopied = { fg = c.pri_5, bold = true, italic = true },
     NeogitChangeDeleted = { fg = c.pri_1, bold = true, italic = true },
@@ -415,11 +436,9 @@ function M.build_from_palette(palette)
     NeogitPopupConfigKey = "NeogitPopupActionKey",
     NeogitPopupOptionKey = "NeogitPopupActionKey",
     NeogitPopupSwitchKey = "NeogitPopupActionKey",
-    NeogitRemote = { fg = c.pri_3 },
     NeogitSubtitleText = { bg = c.black },
     NeogitSectionHeader = { fg = c.fg_dark },
     NeogitTagDistance = { fg = c.tone_2 },
-    NeogitTagName = { fg = c.tone_0 },
     NeogitUnmergedInto = { fg = c.pri_5, bold = true },
     NeogitUnpulledFrom = { fg = c.pri_5, bold = true },
     NeogitUnpushedTo = { fg = c.pri_5, bold = true },
@@ -436,7 +455,7 @@ function M.build_from_palette(palette)
     DapUIStoppedThread = { fg = c.tone_2 },
     DapUIFrameName = "Normal",
     DapUISource = { fg = sem.nav_file },
-    DapUILineNumber = { fg = c.tint_1 },
+    DapUILineNumber = { fg = sem.nav_guide_lowkey },
     DapUIBreakpointsLine = "DapUILineNumber",
     DapUIFloatNormal = "NormalFloat",
     DapUIFloatBorder = { fg = c.pri_4 },
@@ -479,6 +498,13 @@ function M.build_from_palette(palette)
     DiffViewFilePanelCounter = "Number",
     DiffviewFilePanelFileName = { fg = c.fg },
     DiffViewFilePanelSelected = { fg = c.black, bg = sem.bg_tree_selected },
+  }
+
+  -- trouble
+  H.trouble = {
+    TroubleCode = { fg = sem.text_tag },
+    TroubleDiagnosticsItemSource = { fg = sem.text_tag_alt },
+    TroubleDiagnosticsPos = { fg = sem.nav_guide_lowkey },
   }
 
   -- Set highlight groups
