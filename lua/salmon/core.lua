@@ -34,6 +34,12 @@ function M.build_from_palette(palette)
     nav_file = c.fg_dark,
     nav_dir = c.pri_5,
     nav_guide_lowkey = c.tint_0, -- deemphasized guides: aligners, indices into text, etc.
+
+    bg_fail = c.hl_2,
+    bg_pending = c.hl_4,
+    bg_warn = c.hl_3,
+    bg_success = c.hl_5,
+    bg_missing = c.bg_darker,
   }
 
   -- *** SEMANTIC HIGHLIGHTING (SCHEME) ***
@@ -218,11 +224,12 @@ function M.build_from_palette(palette)
     ["@attribute.cpp"] = { fg = c.tint_1 }, -- make it less garish
     -- Python
     ["@punctuation.delimiter.python"] = "@lsp.type.keyword", -- needs this weight
+    ["@keyword.import.python"] = "@lsp.type.keyword",
     -- TODO need a general solution for this `@spell` issue...
     ["@spell.python"] = "Comment",
 
     -- yaml
-    ["@property.yaml"] = { fg = c.black },
+    ["@property.yaml"] = { fg = c.black, bold = true },
     ["@string.yaml"] = { fg = c.tone_3 },
 
     -- zsh
@@ -236,7 +243,8 @@ function M.build_from_palette(palette)
   H.base_theme = {
     -- cursor tweaks
     Cursor = { fg = c.bg_light, bg = c.black },
-    ICursor = { fg = c.black, bg = c.black },
+    ICursrr = { fg = c.black, bg = c.black },
+    rCursrr = { fg = c.ult_1, bg = c.ult_1 },
 
     -- basics
     Normal = { fg = c.fg_dark, bg = c.bg },
@@ -444,6 +452,23 @@ function M.build_from_palette(palette)
     NeogitUnpushedTo = { fg = c.pri_5, bold = true },
   }
 
+  H.neotest = {
+    NeotestFile = { fg = sem.nav_file },
+    NeotestDir = { fg = sem.nav_dir, bold = true },
+    NeotestPassed = { bg = sem.bg_success, fg = c.black },
+    NeotestFailed = { bg = sem.bg_fail, fg = c.black },
+    NeotestRunning = { bg = sem.bg_pending, fg = c.black },
+    NeotestSkipped = { bg = sem.bg_missing, fg = c.black },
+    -- put a box around watches
+    NeotestWatching = { underline = true, bold = true },
+    NeotestNamespace = "@lsp.type.namespace",
+    NeotestAdapterName = "@lsp.type.decorator",
+    NeotestMarked = "@lsp.type.label",
+    NeotestTarget = "Constant",
+    -- TODO, just got rid of garishness for now
+    NeotestExpandMarker = "Normal",
+    NeotestWinSelect = "Normal",
+  }
   -- dapui
   H.dapui_highlights = {
     DapUIScope = { fg = c.pri_4 },
@@ -511,7 +536,9 @@ function M.build_from_palette(palette)
   M.highlights = H
   function M.apply_highlights()
     -- theme cursor correctly
-    vim.cmd("set guicursor=n-v-c:block-Cursor,i:ver1-ICursor")
+    vim.cmd(
+      "set guicursor=n-v-c:block-Cursor,r-cr:block-RCursor,i-ci:ver25-blinkwait200-blinkon200-blinkoff100-ICursor"
+    )
 
     for _, highlight_group in pairs(H) do
       for key, hl in pairs(highlight_group) do
