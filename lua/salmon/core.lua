@@ -1,15 +1,49 @@
--- please see https://github.com/qdbp/SalmonTheme?tab=readme-ov-file#the-restraint-scheme
--- for an explanation for the motivation and design language used here
+--!strict
+-- please see https://github.com/qdbp/SalmonTheme?tab=readme-ov-file#the-restraint-scheme for an explanation for the motivation and design language used here
+
+---@class HlGroup
+---@field fg? string # Foreground color (hex or name)
+---@field bg? string # Background color (hex or name)
+---@field sp? string # Special color (hex or name)
+---@field bold? boolean # Bold text
+---@field italic? boolean # Italic text
+---@field underline? boolean # Underlined text
+---@field undercurl? boolean # Undercurled text
+---@field underdouble? boolean # Double underlined text
+---@field underdotted? boolean # Dotted underlined text
+---@field strikethrough? boolean # Strikethrough text
+---@field reverse? boolean # Reverse colors
+---@field cterm? table # Terminal attributes
+---@field blend? integer # Transparency (0-100)
+---@field nocombine? boolean # Don't combine with other highlights
+
+---@class SignDefinition
+---@field text string The character(s) to display in the sign column
+---@field texthl? string Name of the highlight group for the sign text
+---@field numhl? string Name of the highlight group for the number column
+---@field linehl? string Name of the highlight group for the whole line
+---@field culhl? string Name of the highlight group used when the cursor is on the line
+---@field icon? string Path to an icon file to display (GUI only)
+---@field priority? integer Sign priority for overlapping signs
+
+---@class HlTable
+---@field [string] {[string]: string | HlGroup}
+
+---@class SignTable
+---@field [string] {[string]: SignDefinition}
 
 ---@class Salmon
----@field H table Table containing all highlight groups
----@field S table Table containing all sign definitions
+---@field H HlTable Table containing all highlight groups
+---@field S SignTable SignDefinition Table containing all sign definitions
 ---@field build_from_palette function Builds the color scheme from a given palette
 ---@field apply_highlights function Sets all highlight groups
 ---@field apply_signs function Sets all sign definitions
 local M = {}
 
+---@type HlTable
 H = {} -- highlights definitions
+
+---@type SignTable
 S = {} -- signs definitions
 
 function M.build_from_palette(palette)
@@ -20,6 +54,10 @@ function M.build_from_palette(palette)
   -- TODO use systematically, this is just a stub for now
   -- TODO inject alongside palette?
   local sem = {
+
+    bg_base = c.bg_3,
+    bg_editable = c.bg,
+
     bg_tree_selected = c.hlbg_7,
     bg_selected = c.wht_7,
     bg_active = c.wht_5,
@@ -44,7 +82,6 @@ function M.build_from_palette(palette)
 
   -- *** SEMANTIC HIGHLIGHTING (SCHEME) ***
   H.base_scheme = {
-
     -- we have a hierarchy of truth for highlighting information
     -- at the apex are LSP semantic token highlights
     -- LSP
@@ -153,6 +190,7 @@ function M.build_from_palette(palette)
 
     LspReferenceRead = { bg = c.hl_0 },
     LspReferenceWrite = { bg = c.hl_5 },
+    LspSignatureActiveParameter = { bg = c.hl_6 },
 
     -- TREESITTER
     -- note: most of these should be defined in links pointing back to LSP
@@ -260,34 +298,35 @@ function M.build_from_palette(palette)
 
     -- bottom of screen
     -- basic
-    MsgArea = { fg = c.fg, bg = c.bg_3 },
-    StatusLine = { fg = c.fg_dark, bg = c.bg_3 },
-    StatusLineNC = { fg = c.fg_light, bg = c.bg_3 },
-    ModeMsg = { fg = c.fg, bold = true, bg = c.bg_3 },
-    MoreMsg = { fg = c.fg, bold = true, bg = c.bg_3 },
+    MsgArea = { fg = c.fg, bg = sem.bg_base },
+    StatusLine = { fg = c.fg_dark, bg = sem.bg_base },
+    StatusLineNC = { fg = c.fg_light, bg = sem.bg_base },
+    ModeMsg = { fg = c.fg, bold = true, bg = sem.bg_base },
+    MoreMsg = { fg = c.fg, bold = true, bg = sem.bg_base },
 
     -- left of screen, gutter, and cursor rows
-    LineNr = { fg = c.fg_light, bg = c.bg_3 },
+    LineNr = { fg = c.fg_light, bg = sem.bg_base },
     CursorLine = { bg = c.wht_4 },
-    CursorLineNR = { fg = c.tone_1, bg = c.bg_3, bold = true },
-    FoldColumn = { fg = sem.nav_guide_lowkey, bg = c.bg_3 },
+    CursorLineNR = { fg = c.tone_1, bg = sem.bg_base, bold = true },
+    FoldColumn = { fg = sem.nav_guide_lowkey, bg = sem.bg_base },
     SignColumn = { link = "FoldColumn" },
     -- create new generic group that any plugin can be configured to use
-    IndentGuide = { fg = sem.nav_guide_lowkey },
+    IndentGuide = { fg = c.bg_2 },
+    SignatureMarkText = { fg = c.hyper_0, bold = true, standout = true, bg = c.wht_0 },
 
     -- top of screen
-    TabLineFill = { bg = c.bg_3, fg = c.fg },
+    TabLineFill = { bg = sem.bg_base, fg = c.fg },
     TabLineSel = { bg = c.wht_4, fg = c.black },
-    TabLine = { bg = c.bg_3, fg = c.fg },
+    TabLine = { bg = sem.bg_base, fg = c.fg },
 
     -- popups and modals
-    NormalFloat = { bg = c.bg_3 },
+    NormalFloat = { bg = sem.bg_base },
     FloatBorder = { bg = c.hlbg_7 },
     FloatTitle = { bg = c.hlbg_7 },
     FloatFooter = { bg = c.hlbg_7 },
     Pmenu = { fg = c.fg, bg = c.bg_7 },
     PmenuSel = { fg = c.fg, bg = c.wht_6 },
-    PmenuThumb = { fg = c.fg, bg = c.bg_3 },
+    PmenuThumb = { fg = c.fg, bg = sem.bg_base },
     QuickFixLine = { bg = c.hlbg_7, bold = true },
 
     -- selection, folded, search and match highlights
@@ -340,9 +379,9 @@ function M.build_from_palette(palette)
 
   H.avante = {
     -- TODO avante diff resolution
-    AvanteTitle = { fg = c.black, bg = c.bg_3, bold = true },
-    AvanteSubtitle = { fg = c.black, bg = c.bg_3 },
-    AvanteThirdTitle = { fg = c.fg, bg = c.bg_3 },
+    AvanteTitle = { fg = c.black, bg = sem.bg_base, bold = true },
+    AvanteSubtitle = { fg = c.black, bg = sem.bg_base },
+    AvanteThirdTitle = { fg = c.fg, bg = sem.bg_base },
     AvanteReversedTitle = "AvanteTitle",
     AvanteReversedSubtitle = "AvanteSubtitle",
     AvanteReversedThirdTitle = "AvanteThirdTitle",
@@ -358,7 +397,7 @@ function M.build_from_palette(palette)
 
   -- nvim-tree
   H.nvim_tree = {
-    NvimTreeNormal = { bg = c.bg_3 },
+    NvimTreeNormal = { bg = sem.bg_base },
     NvimTreeExecFile = { fg = c.pri_1 },
     NvimTreeImageFile = { fg = c.pri_3 },
     NvimTreeFolderIcon = "Directory",
@@ -402,18 +441,18 @@ function M.build_from_palette(palette)
     NeogitDiffAddCursor = { fg = c.fg_dark, bg = c.hl_5 },
     NeogitDiffAddHighlight = { fg = c.fg_dark, bg = c.hl_5 },
     NeogitDiffAdditions = { bg = c.hl_5, fg = c.fg_dark },
-    NeogitDiffContext = { bg = c.bg_3 },
-    NeogitDiffContextCursor = { bg = c.bg_3 },
-    NeogitDiffContextHighlight = { bg = c.bg_3 },
+    NeogitDiffContext = { bg = sem.bg_base },
+    NeogitDiffContextCursor = { bg = sem.bg_base },
+    NeogitDiffContextHighlight = { bg = sem.bg_base },
     NeogitDiffDelete = { fg = c.fg_light, bg = c.hl_2 },
     NeogitDiffDeleteCursor = { fg = c.fg_dark, bg = c.hl_2 },
     NeogitDiffDeleteHighlight = { fg = c.fg_dark, bg = c.hl_2 },
     NeogitDiffDeletions = { bg = c.hl_2, fg = c.fg_dark },
-    NeogitDiffHeader = { fg = c.pri_5, bg = c.bg_3, bold = true },
-    NeogitDiffHeaderHighlight = { fg = c.pri_4, bg = c.bg_3, bold = true },
+    NeogitDiffHeader = { fg = c.pri_5, bg = sem.bg_base, bold = true },
+    NeogitDiffHeaderHighlight = { fg = c.pri_4, bg = sem.bg_base, bold = true },
     NeogitFilePath = { fg = c.pri_5 },
     NeogitFloatHeader = { bg = c.bg_dark, bold = true },
-    NeogitFloatHeaderHighlight = { fg = c.pri_5, bg = c.bg_3, bold = true },
+    NeogitFloatHeaderHighlight = { fg = c.pri_5, bg = sem.bg_base, bold = true },
     NeogitGraphAuthor = { fg = c.tone_2 },
     NeogitGraphBlue = { fg = c.tone_5 },
     NeogitGraphBoldBlue = { fg = c.pri_5, bold = true },
@@ -513,7 +552,6 @@ function M.build_from_palette(palette)
     DapUIStepIntoNC = "DapUIStepNC",
     DapUIStepBackNC = "DapUIStepNC",
     DapUIStepOutNC = "DapUIStepNC",
-    SignatureMarkText = { fg = c.pri_3, bg = c.pri_4 },
   }
 
   -- diffview
@@ -540,12 +578,12 @@ function M.build_from_palette(palette)
       "set guicursor=n-v-c:block-Cursor,r-cr:block-RCursor,i-ci:ver25-blinkwait200-blinkon200-blinkoff100-ICursor"
     )
 
-    for _, highlight_group in pairs(H) do
-      for key, hl in pairs(highlight_group) do
-        if type(hl) == "string" then
-          vim.api.nvim_set_hl(0, key, { link = hl })
+    for _, block in pairs(H) do
+      for key, gl in pairs(block) do
+        if type(gl) == "string" then
+          vim.api.nvim_set_hl(0, key, { link = gl })
         else
-          vim.api.nvim_set_hl(0, key, hl)
+          vim.api.nvim_set_hl(0, key, gl)
         end
       end
     end
