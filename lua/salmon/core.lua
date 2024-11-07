@@ -281,8 +281,8 @@ function M.build_from_palette(palette)
   H.base_theme = {
     -- cursor tweaks
     Cursor = { fg = c.bg_light, bg = c.black },
-    ICursrr = { fg = c.black, bg = c.black },
-    rCursrr = { fg = c.ult_1, bg = c.ult_1 },
+    ICursor = { fg = c.black, bg = c.black },
+    rCursor = { fg = c.ult_1, bg = c.ult_1 },
 
     -- basics
     Normal = { fg = c.fg_dark, bg = c.bg },
