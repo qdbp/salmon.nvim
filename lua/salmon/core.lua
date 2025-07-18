@@ -234,6 +234,8 @@ function M.build_from_palette(palette)
     -- metaprogramming and scoping-like
     ["@lsp.type.decorator"] = hl.metadata,
     ["@lsp.type.namespace"] = hl.namespace,
+    -- TODO hl entry
+    ["@lsp.type.lifetime"] = hl.lifetime,
 
     -- base
     -- TODO fill out all entries from vim docs
@@ -345,7 +347,7 @@ function M.build_from_palette(palette)
     ["@tag.delimiter"] = "@lsp.type.operator",
     ["@text"] = "@lsp.type.variable",
     ["@type"] = "@lsp.type.class",
-    ["@type.builtin"] = "@lsp.type.class",
+    ["@type.builtin"] = "@lsp.mod.builtin",
 
     -- TODO break these out to other files
     -- language specific
@@ -436,10 +438,10 @@ function M.build_from_palette(palette)
 
     -- TODO need semantic indirection here a lot of duplication happening
     -- popups and modals
-    NormalFloat = { bg = sc.bg_base },
-    FloatBorder = { bg = c.hlbg_7 },
-    FloatTitle = { bg = c.hlbg_7 },
-    FloatFooter = { bg = c.hlbg_7 },
+    NormalFloat = { bg = c.bg_2 },
+    FloatBorder = { bg = c.bg_2 },
+    FloatTitle = { bg = c.bg_2 },
+    FloatFooter = { bg = c.bg_2 },
     Pmenu = { fg = c.fg, bg = c.bg_7 },
     PmenuSel = { fg = c.fg, bg = c.wht_6 },
     PmenuThumb = { fg = c.fg, bg = sc.bg_base },
@@ -490,6 +492,9 @@ function M.build_from_palette(palette)
     Title = { fg = c.black, bold = true },
     Question = { fg = c.ult_5 },
     RenderMarkdownCode = { bg = c.wht_7 },
+
+    -- lsp
+    LspCodeLens = { fg = c.shd_7 },
   }
 
   -- PLUGIN SPECIFIC
