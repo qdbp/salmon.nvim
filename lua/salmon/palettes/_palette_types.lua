@@ -1,4 +1,5 @@
 --- @class Palette
+--- @field background "light"|"dark"
 --- @field name string
 --- @field view string
 --- @field colors table<string, string>

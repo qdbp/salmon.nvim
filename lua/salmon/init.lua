@@ -22,7 +22,9 @@ function M.setup(opts)
 
   core.apply_highlights()
   core.apply_signs()
+  core.apply_ansi()
 
+  vim.g.background = palette.background
   vim.g.colors_name = "Salmon_" .. palette.name .. "_" .. palette.view
 end
 

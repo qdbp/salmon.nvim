@@ -2,6 +2,7 @@ require("salmon.palettes._palette_types")
 
 --- @type Palette
 return {
+  background = "light",
   name = "Restraint",
   view = "Twilight",
   colors = {

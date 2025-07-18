@@ -46,15 +46,28 @@ H = {} -- highlights definitions
 ---@type SignTable
 S = {} -- signs definitions
 
+local function u(...)
+  local result = {}
+  local tables = { ... }
+  for _, t in ipairs(tables) do
+    for k, v in pairs(t) do
+      result[k] = v
+    end
+  end
+  return result
+end
+
 function M.build_from_palette(palette)
   local c = palette.colors
 
-  -- *** SEMANTIC GROUP DEFINITIONS ***
-  -- used to add a layer of indirection for consistency
-  -- TODO use systematically, this is just a stub for now
-  -- TODO inject alongside palette?
-  local sem = {
+  -- first we define some semantic indirection tables
+  -- that lets us refer to colors by their indended use
+  -- and swap out large swatches at once if needed in a consistent way
 
+  -- semantic color table
+  local sc = {
+
+    -- THEME
     bg_base = c.bg_3,
     bg_editable = c.bg,
 
@@ -78,6 +91,100 @@ function M.build_from_palette(palette)
     bg_warn = c.hl_3,
     bg_success = c.hl_5,
     bg_missing = c.bg_darker,
+
+    diff = {
+      plus = c.hl_5,
+      change = c.hl_7,
+      minus = c.hl_2,
+      delete = c.bg_darker,
+    },
+
+    diag = {
+      ok = c.hl_6,
+      hint = c.hlbg_7,
+      minor = c.tint_5,
+
+      warn = c.hyperhl_3,
+      warn_inline = c.hl_3,
+      err = c.hyperhl_2,
+      err_inline = c.hl_2,
+    },
+  }
+
+  -- then we define our highlighting scheme at a high level
+  -- we coordinate the meanings of the colors here with respect to these
+  -- more abstract concepts. This way every language will have a consistent
+  -- feel.
+  local hl = {
+    -- core
+    keyword = { fg = c.black, bold = true },
+    metadata = { fg = c.ult_1 },
+    label = { fg = c.ult_2, bold = true },
+    namespace = { fg = c.tint_3 },
+    macro = { fg = c.ult_4 },
+    -- punctuation
+    -- this is defined semantically, not literally
+    punc = {
+      -- separators ought to be very unostrusive
+      separator = { fg = c.fg_light },
+      -- brackets are visible but not overdone
+      -- this should be overriden by language settings, since the desired weight
+      -- varies a lot by language and bracket type.
+      bracket = { fg = c.black },
+      -- operators are like keywords and calls. major control flow requireing major weight.
+      operator = { fg = c.black, bold = true },
+    },
+    -- literals (ex. string)
+    lit = {
+      int = { fg = c.tone_1 },
+      float = { fg = c.tone_1 },
+      bool = { fg = c.tone_1, bold = true },
+    },
+    -- type level identifiers
+    -- design: muted colors. redder are more literal like, bluer are more abstract
+    -- exception: avoid very string-like green
+    cls = {
+      param = { fg = c.tone_0 },
+      struct = { fg = c.tone_1 },
+      enum = { fg = c.tone_1 },
+      interface = { fg = c.tone_3, italic = true },
+      abstract = { fg = c.tone_4 },
+      class = { fg = c.tone_5 },
+    },
+    -- variable level identifiers
+    -- brighter colors for special varables
+    -- the one notable design decision: black for all functions and method
+    -- this makes the call skeleton of the program really stand out and feel "serious"
+    -- I would argue this is the aesthetic crux of the entire theme!
+    var = {
+      -- basic, neutral, restrained
+      var = { fg = c.fg_dark },
+      fun = { fg = c.black },
+      method = { fg = c.black },
+      -- more colorful, special
+      -- TODO should member not be a mod?
+      param = { fg = c.pri_4 },
+      member = { fg = c.pri_1 },
+      constant = { fg = c.ult_5 },
+      enum_member = { fg = c.ult_1 },
+      -- TODO add closure
+      captured = { fg = c.pri_2 }, -- as in by a closure
+    },
+    -- string like, muted greenish tones all round
+    str = {
+      str = { fg = c.tone_3 },
+      doc = { fg = c.tint_2, bold = true },
+      special = { fg = c.tone_4, bold = true },
+      regex = { fg = c.pri_2, bold = true },
+      comment = { fg = c.fg_light },
+      todo = { fg = c.tint_1, bold = true },
+    },
+    -- modifiers
+    mod = {
+      builtin = { fg = c.pri_0 },
+      -- again the BIG aesthetic decision here. make control flow pop!
+      call = { bold = true },
+    },
   }
 
   -- *** SEMANTIC HIGHLIGHTING (SCHEME) ***
@@ -86,67 +193,59 @@ function M.build_from_palette(palette)
     -- at the apex are LSP semantic token highlights
     -- LSP
     -- lsp mods
-    ["@lsp.mod.builtin"] = { fg = c.ult_0 },
-    ["@lsp.mod.defaultLibrary"] = "@lsp.builtin",
+    ["@lsp.mod.builtin"] = hl.mod.builtin,
+    ["@lsp.mod.defaultLibrary"] = hl.mod.builtin,
     -- TODO this doesn't work, need to use a callback to handle it properly!
     -- or better, fix upstream
     -- ['@lsp.mod.definition'] = { bold = false },
-    ["@lsp.mod.classScope"] = "@lsp.property",
 
     -- lsp types
-    ["@lsp.type.comment"] = { fg = c.fg_light },
+    ["@lsp.type.comment"] = hl.str.comment,
     ["@lsp.type.unknown"] = { fg = c.fg_dark },
     -- text-like
     -- literal-like
-    ["@lsp.type.boolean"] = { fg = c.tone_1, bold = true },
-    ["@lsp.type.number"] = { fg = c.tone_1 },
-    ["@lsp.type.string"] = { fg = c.tone_3 },
-    ["@lsp.type.character"] = { fg = c.tone_4 },
-    ["@lsp.type.regexp"] = { fg = c.tone_4 },
+    ["@lsp.type.boolean"] = hl.lit.bool,
+    ["@lsp.type.number"] = hl.lit.int,
+    ["@lsp.type.string"] = hl.str.str,
+    ["@lsp.type.character"] = hl.str.str,
+    ["@lsp.type.regexp"] = hl.str.regex,
     -- class-like
-    ["@lsp.type.enum"] = { fg = c.tone_1 },
-    ["@lsp.type.class"] = { fg = c.tone_5 },
-    ["@lsp.type.struct"] = { fg = c.tone_1 },
+    ["@lsp.type.enum"] = hl.cls.enum,
+    ["@lsp.type.interface"] = hl.cls.interface,
+    ["@lsp.type.class"] = hl.cls.class,
+    ["@lsp.type.struct"] = hl.cls.struct,
+    ["@lsp.type.typeParameter"] = hl.cls.param,
     -- function-like
-    ["@lsp.type.function"] = { fg = c.black },
-    ["@lsp.type.method"] = { fg = c.black },
+    ["@lsp.type.function"] = hl.var.fun,
+    ["@lsp.type.method"] = hl.var.method,
     -- variable-like
-    ["@lsp.type.constant"] = { fg = c.ult_5 },
-    ["@lsp.type.parameter"] = { fg = c.pri_4 },
-    ["@lsp.type.variable"] = { fg = c.fg_dark },
-    ["@lsp.type.property"] = { fg = c.pri_1 },
-    ["@lsp.type.enumMember"] = { fg = c.ult_1 },
+    ["@lsp.type.variable"] = hl.var.var,
+    ["@lsp.type.constant"] = hl.var.constant,
+    -- TODO is builtin also a type or only a mod?
+    ["@lsp.type.builtin"] = hl.mod.builtin,
+    ["@lsp.type.parameter"] = hl.var.param,
+    ["@lsp.type.property"] = hl.var.member,
+    ["@lsp.type.enumMember"] = hl.var.enum_member,
     -- control flow-like
-    ["@lsp.type.keyword"] = { fg = c.black, bold = true },
-    ["@lsp.type.operator"] = "@lsp.type.keyword",
-    ["@lsp.type.macro"] = { fg = c.ult_4 },
-    ["@lsp.type.label"] = { fg = c.ult_2, bold = true },
+    ["@lsp.type.keyword"] = hl.keyword,
+    ["@lsp.type.operator"] = hl.keyword,
+    ["@lsp.type.macro"] = hl.macro,
+    ["@lsp.type.label"] = hl.label,
     -- metaprogramming and scoping-like
-    ["@lsp.type.decorator"] = { fg = c.ult_1 },
-    ["@lsp.type.namespace"] = { fg = c.tint_3 },
-
-    -- lsp legacy types; older LSPs still issue these?
-    ["@lsp.enumMember"] = "@lsp.type.enumMember",
-    ["@lsp.typeParameter"] = "@lsp.type.parameter",
-    ["@lsp.operator"] = "@lsp.type.operator",
-    ["@lsp.constant"] = "@lsp.type.constant",
-
-    -- we're kind of making these one up, but they're handy
-    ["@lsp.metadata"] = { fg = c.ult_1 },
-    ["@lsp.label"] = "@lsp.type.label",
+    ["@lsp.type.decorator"] = hl.metadata,
+    ["@lsp.type.namespace"] = hl.namespace,
 
     -- base
     -- TODO fill out all entries from vim docs
     Comment = "@lsp.type.comment",
-    SpecialComment = { fg = c.tint_5, bold = true },
-    Todo = { fg = c.tint_1, bold = true },
+    Todo = hl.str.todo,
     Constant = "@lsp.constant",
 
     -- primitives
     String = "@lsp.string",
     Character = "@lsp.type.regexp",
     Special = "@lsp.type.regexp",
-    SpecialChar = { fg = c.tone_4 },
+    SpecialChar = hl.str.special,
     Number = "@lsp.type.number",
     Float = "@lsp.typenumber",
     Boolean = "@lsp.typeboolean",
@@ -154,19 +253,19 @@ function M.build_from_palette(palette)
     -- variables
     Identifier = "@lsp.variable",
     Function = "@lsp.function",
-    Metadata = "@lsp.type.decorator",
-    PreProc = "@lsp.type.decorator",
-    Define = "@lsp.type.macro",
-    Macro = "@lsp.type.macro",
-    Include = "@lsp.type.macro",
+    Metadata = hl.metadata,
+    PreProc = hl.metadata,
+    Define = hl.macro,
+    Macro = hl.macro,
+    Include = hl.macro,
 
     -- conrol flow
-    Keyword = "@lsp.type.keyword",
-    Statement = "Keyword",
-    Conditional = "Keyword",
-    Repeat = "Keyword",
-    Label = { fg = c.ult_2, bold = true },
-    Operator = "@lsp.type.operator",
+    Keyword = hl.keyword,
+    Statement = hl.keyword,
+    Conditional = hl.keyword,
+    Repeat = hl.keyword,
+    Label = hl.label,
+    Operator = hl.keyword,
 
     -- syntax
     StorageClass = "@lsp.type.keyword",
@@ -179,15 +278,6 @@ function M.build_from_palette(palette)
     Tag = "@lsp.type.keyword",
     Delimiter = { fg = c.fg_light }, -- unobtrusive
 
-    -- meta
-    Debug = "@lsp.keyword",
-    Underlined = { underline = true },
-    Ignore = { link = "Comment" },
-    Error = { fg = c.pri_1 },
-    Added = "@diff.plus",
-    Changed = "@diff.delta",
-    Removed = "@diff.minus",
-
     LspReferenceRead = { bg = c.hl_0 },
     LspReferenceWrite = { bg = c.hl_5 },
     LspSignatureActiveParameter = { bg = c.hl_6 },
@@ -195,12 +285,12 @@ function M.build_from_palette(palette)
     -- TREESITTER
     -- note: most of these should be defined in links pointing back to LSP
     -- only add cases here that are not well-covered by LSP
-    ["@comment"] = "Comment",
+    ["@comment"] = hl.str.comment,
 
     -- TODO unsorted
 
     -- variable-like
-    ["@attribute"] = "@lsp.type.metadata",
+    ["@attribute"] = hl.metadata,
     ["@variable"] = "@lsp.type.variable",
     ["@variable.builtin"] = "@lsp.type.builtin",
     ["@variable.parameter"] = "@lsp.type.parameter",
@@ -236,20 +326,20 @@ function M.build_from_palette(palette)
     ["@label"] = "@lsp.type.label",
 
     -- function-like
-    ["@method"] = "@lsp.type.method",
-    ["@function.call"] = { bold = true },
-    ["@function.method.call"] = { bold = true },
+    ["@method"] = hl.var.method,
+    ["@function.call"] = hl.mod.call,
+    ["@function.method.call"] = hl.mod.call,
 
     -- namespace-like
-    ["@namespace"] = "@lsp.type.namespace",
-    ["@module"] = "@lsp.type.namespace",
+    ["@namespace"] = hl.namespace,
+    ["@module"] = hl.namespace,
 
-    ["@number"] = "@lsp.type.number",
-    ["@number.float"] = "@lsp.type.number",
-    ["@string"] = "@lsp.type.string",
-    ["@string.documentation"] = { fg = c.tint_2, bold = true },
-    ["@string.regex"] = "SpecialChar",
-    ["@string.escape"] = "SpecialChar",
+    ["@number"] = hl.lit.int,
+    ["@number.float"] = hl.lit.float,
+    ["@string"] = hl.str.str,
+    ["@string.documentation"] = hl.str.doc,
+    ["@string.regex"] = hl.str.regex,
+    ["@string.escape"] = hl.str.special,
     ["@tag"] = "@lsp.type.keyword",
     ["@tag.attribute"] = "@lsp.type.property",
     ["@tag.delimiter"] = "@lsp.type.operator",
@@ -257,24 +347,31 @@ function M.build_from_palette(palette)
     ["@type"] = "@lsp.type.class",
     ["@type.builtin"] = "@lsp.type.class",
 
+    -- TODO break these out to other files
     -- language specific
     -- C/C++
     ["@attribute.cpp"] = { fg = c.tint_1 }, -- make it less garish
+
     -- Python
     ["@punctuation.delimiter.python"] = "@lsp.type.keyword", -- needs this weight
+    ["@constant.builtin.python"] = "@lsp.type.keyword", -- needs this weight
     ["@keyword.import.python"] = "@lsp.type.keyword",
     -- TODO need a general solution for this `@spell` issue...
     ["@spell.python"] = "Comment",
+    -- ["@lsp.mod.readonly.python"] = "@lsp.type.constant",
+
+    -- JAVA
+    ["@lsp.type.modifier.java"] = hl.keyword,
 
     -- yaml
     ["@property.yaml"] = { fg = c.black, bold = true },
     ["@string.yaml"] = { fg = c.tone_3 },
 
     -- zsh
-    zshDeref = "@lsp.type.parameter",
-    zshString = "String",
-    zshStringDelimeter = "String",
-    zshPOSIXString = "String",
+    zshDeref = hl.var.param,
+    zshString = hl.str.str,
+    zshStringDelimeter = hl.str.str,
+    zshPOSIXString = hl.str.str,
   }
 
   -- THEME: styling the window and non-code elements
@@ -287,10 +384,28 @@ function M.build_from_palette(palette)
     -- basics
     Normal = { fg = c.fg_dark, bg = c.bg },
     NormalNC = { fg = c.fg },
+
+    -- extmarks handling
+    Bold = { bold = true },
+    Underlined = { underline = true },
+
+    -- separators
     WinSeparator = { fg = c.dbg_3, bg = c.dbg_3 },
+
+    -- TODO move to THEME??
     Identifier = { link = "Normal" },
+
+    -- TODO random bag of crap, sort it out
     Special = { fg = c.tone_4 },
     ErrorMsg = { fg = c.pri_1 },
+    -- meta
+    -- Debug = "@lsp.keyword",
+    -- TODO what is this?
+    Ignore = hl.str.comment,
+    Error = { fg = sc.diag.err },
+    Added = "@diff.plus",
+    Changed = "@diff.delta",
+    Removed = "@diff.minus",
 
     -- window tile
     WinBar = { bg = c.dbg_3, fg = c.black },
@@ -298,35 +413,36 @@ function M.build_from_palette(palette)
 
     -- bottom of screen
     -- basic
-    MsgArea = { fg = c.fg, bg = sem.bg_base },
-    StatusLine = { fg = c.fg_dark, bg = sem.bg_base },
-    StatusLineNC = { fg = c.fg_light, bg = sem.bg_base },
-    ModeMsg = { fg = c.fg, bold = true, bg = sem.bg_base },
-    MoreMsg = { fg = c.fg, bold = true, bg = sem.bg_base },
+    MsgArea = { fg = c.fg, bg = sc.bg_base },
+    StatusLine = { fg = c.fg_dark, bg = sc.bg_base },
+    StatusLineNC = { fg = c.fg_light, bg = sc.bg_base },
+    ModeMsg = { fg = c.fg, bold = true, bg = sc.bg_base },
+    MoreMsg = { fg = c.fg, bold = true, bg = sc.bg_base },
 
     -- left of screen, gutter, and cursor rows
-    LineNr = { fg = c.fg_light, bg = sem.bg_base },
+    LineNr = { fg = c.fg_light, bg = sc.bg_base },
     CursorLine = { bg = c.wht_4 },
-    CursorLineNR = { fg = c.tone_1, bg = sem.bg_base, bold = true },
-    FoldColumn = { fg = sem.nav_guide_lowkey, bg = sem.bg_base },
+    CursorLineNR = { fg = c.tone_1, bg = sc.bg_base, bold = true },
+    FoldColumn = { fg = sc.nav_guide_lowkey, bg = sc.bg_base },
     SignColumn = { link = "FoldColumn" },
     -- create new generic group that any plugin can be configured to use
     IndentGuide = { fg = c.bg_2 },
     SignatureMarkText = { fg = c.hyper_0, bold = true, standout = true, bg = c.wht_0 },
 
     -- top of screen
-    TabLineFill = { bg = sem.bg_base, fg = c.fg },
+    TabLineFill = { bg = sc.bg_base, fg = c.fg },
     TabLineSel = { bg = c.wht_4, fg = c.black },
-    TabLine = { bg = sem.bg_base, fg = c.fg },
+    TabLine = { bg = sc.bg_base, fg = c.fg },
 
+    -- TODO need semantic indirection here a lot of duplication happening
     -- popups and modals
-    NormalFloat = { bg = sem.bg_base },
+    NormalFloat = { bg = sc.bg_base },
     FloatBorder = { bg = c.hlbg_7 },
     FloatTitle = { bg = c.hlbg_7 },
     FloatFooter = { bg = c.hlbg_7 },
     Pmenu = { fg = c.fg, bg = c.bg_7 },
     PmenuSel = { fg = c.fg, bg = c.wht_6 },
-    PmenuThumb = { fg = c.fg, bg = sem.bg_base },
+    PmenuThumb = { fg = c.fg, bg = sc.bg_base },
     QuickFixLine = { bg = c.hlbg_7, bold = true },
 
     -- selection, folded, search and match highlights
@@ -336,23 +452,28 @@ function M.build_from_palette(palette)
     Search = { bg = c.hl_4 },
 
     -- diagnostics
-    DiagnosticError = { fg = c.black, bg = c.hl_2 },
-    DiagnosticUnderlineError = { sp = c.hyper_2, undercurl = true },
-    DiagnosticWarn = { fg = c.fg, bg = c.hl_3 },
-    DiagnosticUnderlineWarn = { sp = c.hyper_3, undercurl = true },
-    DiagnosticInfo = { fg = c.fg, bg = c.hl_0 },
-    DiagnosticUnderlineInfo = { sp = c.hl_0, underline = true },
-    DiagnosticHint = { fg = c.fg, bg = c.hl_7 },
-    DiagnosticUnderlineHint = { sp = c.hl_7, underline = true },
-    DiagnosticOK = { fg = c.fg, bg = c.hl_5 },
-    DiagnosticUnnecessary = { fg = c.fg_light, undercurl = true },
+    DiagnosticError = { fg = c.black, bg = sc.diag.err, bold = true },
+    DiagnosticWarn = { fg = c.fg, bg = sc.diag.warn },
+    DiagnosticInfo = { fg = c.fg, bg = sc.diag.info },
+    DiagnosticHint = { fg = c.fg_light, bg = sc.bg_base },
+    DiagnosticOK = { fg = c.fg, bg = sc.diag.ok },
+
+    -- floating
+    DiagnosticFloatingError = { fg = c.black, sp = sc.diag.err }, -- no bold
+
+    -- use underline for minor cases, otherwise highlight
+    DiagnosticUnderlineError = { sp = sc.diag.err, undercurl = true },
+    DiagnosticUnderlineWarn = { sp = sc.diag.warn, undercurl = true },
+    DiagnosticUnderlineInfo = { sp = sc.diag.info, underline = true },
+    DiagnosticUnderlineHint = { sp = sc.diag.hint, underline = true },
+    DiagnosticUnnecessary = { fg = c.fg_light, sp = sc.diag.minor, undercurl = true },
     WarningMsg = { fg = c.hyper_2 },
     -- debugging
     Breakpoint = { fg = c.hyper_2, bold = true, bg = c.wht_6 },
     BreakpointCondition = { fg = c.hyper_1, bold = true, bg = c.wht_6 },
 
     -- diffs
-    DiffAdd = { bg = c.hl_5 },
+    DiffAdd = { bg = sc.diff_plus },
     DiffDelete = { bg = c.bg_darker },
     DiffChange = { bg = c.hl_7 },
     DiffText = "DiffChange",
@@ -362,7 +483,7 @@ function M.build_from_palette(palette)
     ["@diff.minus"] = { bg = c.hl_2 },
 
     -- file navigation
-    Directory = { fg = sem.nav_dir },
+    Directory = { fg = sc.nav_dir },
 
     -- Markdown et al
     ["@markup.raw"] = { bg = c.wht_7 }, -- stop the garishness!
@@ -379,9 +500,9 @@ function M.build_from_palette(palette)
 
   H.avante = {
     -- TODO avante diff resolution
-    AvanteTitle = { fg = c.black, bg = sem.bg_base, bold = true },
-    AvanteSubtitle = { fg = c.black, bg = sem.bg_base },
-    AvanteThirdTitle = { fg = c.fg, bg = sem.bg_base },
+    AvanteTitle = { fg = c.black, bg = sc.bg_base, bold = true },
+    AvanteSubtitle = { fg = c.black, bg = sc.bg_base },
+    AvanteThirdTitle = { fg = c.fg, bg = sc.bg_base },
     AvanteReversedTitle = "AvanteTitle",
     AvanteReversedSubtitle = "AvanteSubtitle",
     AvanteReversedThirdTitle = "AvanteThirdTitle",
@@ -397,7 +518,7 @@ function M.build_from_palette(palette)
 
   -- nvim-tree
   H.nvim_tree = {
-    NvimTreeNormal = { bg = sem.bg_base },
+    NvimTreeNormal = { bg = sc.bg_base },
     NvimTreeExecFile = { fg = c.pri_1 },
     NvimTreeImageFile = { fg = c.pri_3 },
     NvimTreeFolderIcon = "Directory",
@@ -407,7 +528,7 @@ function M.build_from_palette(palette)
 
   -- gitsigns
   H.gitsigns = {
-    GitSignsChangedelete = { bg = c.hl_3 },
+    GitSignsChangedelete = { bg = sc.diff.minus, bold = true },
     GitSignsStagedAdd = "GitSignsAdd",
     GitSignsStagedDelete = "GitSignsDelete",
     GitSignsStagedChange = "GitSignsChange",
@@ -420,11 +541,11 @@ function M.build_from_palette(palette)
     NeogitBranch = { fg = c.black, underline = true },
     NeogitRemote = { fg = c.tone_2, underline = true },
     NeogitBranchHead = { fg = c.black, underline = true },
-    NeogitTagName = { fg = sem.text_tag },
+    NeogitTagName = { fg = sc.text_tag },
 
     -- object-like
     -- TODO factor common git items out to share with e.g. blame
-    NeogitObjectId = { fg = sem.text_tag_alt },
+    NeogitObjectId = { fg = sc.text_tag_alt },
 
     NeogitChangeAdded = { fg = c.pri_3, bold = true, italic = true },
     NeogitChangeCopied = { fg = c.pri_5, bold = true, italic = true },
@@ -437,22 +558,25 @@ function M.build_from_palette(palette)
     NeogitChangeUpdated = { fg = c.pri_4, bold = true, italic = true },
     NeogitCommitViewHeader = { fg = c.fg_dark, bg = c.hl_7 },
     NeogitCommitViewDescription = { fg = c.fg_dark, bold = true },
+
+    -- TODO fix this up
     NeogitDiffAdd = { fg = c.fg_dark, bg = c.hl_5 },
     NeogitDiffAddCursor = { fg = c.fg_dark, bg = c.hl_5 },
     NeogitDiffAddHighlight = { fg = c.fg_dark, bg = c.hl_5 },
     NeogitDiffAdditions = { bg = c.hl_5, fg = c.fg_dark },
-    NeogitDiffContext = { bg = sem.bg_base },
-    NeogitDiffContextCursor = { bg = sem.bg_base },
-    NeogitDiffContextHighlight = { bg = sem.bg_base },
+    NeogitDiffContext = { bg = sc.bg_base },
+    NeogitDiffContextCursor = { bg = sc.bg_base },
+    NeogitDiffContextHighlight = { bg = sc.bg_base },
     NeogitDiffDelete = { fg = c.fg_light, bg = c.hl_2 },
     NeogitDiffDeleteCursor = { fg = c.fg_dark, bg = c.hl_2 },
     NeogitDiffDeleteHighlight = { fg = c.fg_dark, bg = c.hl_2 },
     NeogitDiffDeletions = { bg = c.hl_2, fg = c.fg_dark },
-    NeogitDiffHeader = { fg = c.pri_5, bg = sem.bg_base, bold = true },
-    NeogitDiffHeaderHighlight = { fg = c.pri_4, bg = sem.bg_base, bold = true },
+    NeogitDiffHeader = { fg = c.pri_5, bg = sc.bg_base, bold = true },
+    NeogitDiffHeaderHighlight = { fg = c.pri_4, bg = sc.bg_base, bold = true },
+
     NeogitFilePath = { fg = c.pri_5 },
     NeogitFloatHeader = { bg = c.bg_dark, bold = true },
-    NeogitFloatHeaderHighlight = { fg = c.pri_5, bg = sem.bg_base, bold = true },
+    NeogitFloatHeaderHighlight = { fg = c.pri_5, bg = sc.bg_base, bold = true },
     NeogitGraphAuthor = { fg = c.tone_2 },
     NeogitGraphBlue = { fg = c.tone_5 },
     NeogitGraphBoldBlue = { fg = c.pri_5, bold = true },
@@ -492,12 +616,12 @@ function M.build_from_palette(palette)
   }
 
   H.neotest = {
-    NeotestFile = { fg = sem.nav_file },
-    NeotestDir = { fg = sem.nav_dir, bold = true },
-    NeotestPassed = { bg = sem.bg_success, fg = c.black },
-    NeotestFailed = { bg = sem.bg_fail, fg = c.black },
-    NeotestRunning = { bg = sem.bg_pending, fg = c.black },
-    NeotestSkipped = { bg = sem.bg_missing, fg = c.black },
+    NeotestFile = { fg = sc.nav_file },
+    NeotestDir = { fg = sc.nav_dir, bold = true },
+    NeotestPassed = { bg = sc.bg_success, fg = c.black },
+    NeotestFailed = { bg = sc.bg_fail, fg = c.black },
+    NeotestRunning = { bg = sc.bg_pending, fg = c.black },
+    NeotestSkipped = { bg = sc.bg_missing, fg = c.black },
     -- put a box around watches
     NeotestWatching = { underline = true, bold = true },
     NeotestNamespace = "@lsp.type.namespace",
@@ -518,8 +642,8 @@ function M.build_from_palette(palette)
     DapUIThread = { fg = c.pri_3 },
     DapUIStoppedThread = { fg = c.tone_2 },
     DapUIFrameName = "Normal",
-    DapUISource = { fg = sem.nav_file },
-    DapUILineNumber = { fg = sem.nav_guide_lowkey },
+    DapUISource = { fg = sc.nav_file },
+    DapUILineNumber = { fg = sc.nav_guide_lowkey },
     DapUIBreakpointsLine = "DapUILineNumber",
     DapUIFloatNormal = "NormalFloat",
     DapUIFloatBorder = { fg = c.pri_4 },
@@ -560,14 +684,14 @@ function M.build_from_palette(palette)
     DiffViewFilePanelTitle = { bold = true },
     DiffViewFilePanelCounter = "Number",
     DiffviewFilePanelFileName = { fg = c.fg },
-    DiffViewFilePanelSelected = { fg = c.black, bg = sem.bg_tree_selected },
+    DiffViewFilePanelSelected = { fg = c.black, bg = sc.bg_tree_selected },
   }
 
   -- trouble
   H.trouble = {
-    TroubleCode = { fg = sem.text_tag },
-    TroubleDiagnosticsItemSource = { fg = sem.text_tag_alt },
-    TroubleDiagnosticsPos = { fg = sem.nav_guide_lowkey },
+    TroubleCode = { fg = sc.text_tag },
+    TroubleDiagnosticsItemSource = { fg = sc.text_tag_alt },
+    TroubleDiagnosticsPos = { fg = sc.nav_guide_lowkey },
   }
 
   -- Set highlight groups
@@ -605,6 +729,28 @@ function M.build_from_palette(palette)
         vim.fn.sign_define(sign_name, sign_def)
       end
     end
+  end
+
+  -- TODO really the palette should define e.g. ansi_0.
+  -- right now we're exploiting an idisoyncracy of the existing salmon palettes
+  -- but hey, first party privilege.
+  function M.apply_ansi()
+    vim.g.terminal_color_0 = c.black -- black
+    vim.g.terminal_color_1 = c.tone_2 -- red
+    vim.g.terminal_color_2 = c.tone_4 -- green
+    vim.g.terminal_color_3 = c.tone_3 -- yellow
+    vim.g.terminal_color_4 = c.tone_0 -- blue
+    vim.g.terminal_color_5 = c.tone_1 -- magenta
+    vim.g.terminal_color_6 = c.tone_5 -- cyan
+    vim.g.terminal_color_7 = c.bg -- white
+    vim.g.terminal_color_8 = c.fg_dark -- bright black
+    vim.g.terminal_color_9 = c.ult_2 -- bright red
+    vim.g.terminal_color_10 = c.ult_4 -- bright green
+    vim.g.terminal_color_11 = c.ult_3 -- bright yellow
+    vim.g.terminal_color_12 = c.ult_0 -- bright blue
+    vim.g.terminal_color_13 = c.ult_1 -- bright magenta
+    vim.g.terminal_color_14 = c.ult_5 -- bright cyan
+    vim.g.terminal_color_15 = c.white -- bright white
   end
 end
 
