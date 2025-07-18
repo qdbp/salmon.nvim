@@ -87,7 +87,7 @@ function M.build_from_palette(palette)
     -- LSP
     -- lsp mods
     ["@lsp.mod.builtin"] = { fg = c.ult_0 },
-    ["@lsp.mod.defaultLibrary"] = "@lsp.builtin",
+    ["@lsp.mod.defaultLibrary"] = "@lsp.mod.builtin",
     -- TODO this doesn't work, need to use a callback to handle it properly!
     -- or better, fix upstream
     -- ['@lsp.mod.definition'] = { bold = false },
@@ -104,9 +104,10 @@ function M.build_from_palette(palette)
     ["@lsp.type.character"] = { fg = c.tone_4 },
     ["@lsp.type.regexp"] = { fg = c.tone_4 },
     -- class-like
-    ["@lsp.type.enum"] = { fg = c.tone_1 },
-    ["@lsp.type.class"] = { fg = c.tone_5 },
+    ["@lsp.type.enum"] = { fg = c.tone_0 },
     ["@lsp.type.struct"] = { fg = c.tone_1 },
+    ["@lsp.type.interface"] = { fg = c.tone_4 },
+    ["@lsp.type.class"] = { fg = c.tone_5 },
     -- function-like
     ["@lsp.type.function"] = { fg = c.black },
     ["@lsp.type.method"] = { fg = c.black },
@@ -119,11 +120,12 @@ function M.build_from_palette(palette)
     -- control flow-like
     ["@lsp.type.keyword"] = { fg = c.black, bold = true },
     ["@lsp.type.operator"] = "@lsp.type.keyword",
-    ["@lsp.type.macro"] = { fg = c.ult_4 },
+    ["@lsp.type.macro"] = { fg = c.pri_5 },
     ["@lsp.type.label"] = { fg = c.ult_2, bold = true },
     -- metaprogramming and scoping-like
     ["@lsp.type.decorator"] = { fg = c.ult_1 },
     ["@lsp.type.namespace"] = { fg = c.tint_3 },
+    ["@lsp.type.lifetime"] = { fg = c.tint_1 },
 
     -- lsp legacy types; older LSPs still issue these?
     ["@lsp.enumMember"] = "@lsp.type.enumMember",
@@ -255,7 +257,7 @@ function M.build_from_palette(palette)
     ["@tag.delimiter"] = "@lsp.type.operator",
     ["@text"] = "@lsp.type.variable",
     ["@type"] = "@lsp.type.class",
-    ["@type.builtin"] = "@lsp.type.class",
+    ["@type.builtin"] = "@lsp.mod.builtin",
 
     -- language specific
     -- C/C++
@@ -265,7 +267,6 @@ function M.build_from_palette(palette)
     ["@keyword.import.python"] = "@lsp.type.keyword",
     -- TODO need a general solution for this `@spell` issue...
     ["@spell.python"] = "Comment",
-
     -- yaml
     ["@property.yaml"] = { fg = c.black, bold = true },
     ["@string.yaml"] = { fg = c.tone_3 },
@@ -320,10 +321,10 @@ function M.build_from_palette(palette)
     TabLine = { bg = sem.bg_base, fg = c.fg },
 
     -- popups and modals
-    NormalFloat = { bg = sem.bg_base },
-    FloatBorder = { bg = c.hlbg_7 },
-    FloatTitle = { bg = c.hlbg_7 },
-    FloatFooter = { bg = c.hlbg_7 },
+    NormalFloat = { bg = c.bg_2 },
+    FloatBorder = { bg = c.bg_2 },
+    FloatTitle = { bg = c.bg_2 },
+    FloatFooter = { bg = c.bg_2 },
     Pmenu = { fg = c.fg, bg = c.bg_7 },
     PmenuSel = { fg = c.fg, bg = c.wht_6 },
     PmenuThumb = { fg = c.fg, bg = sem.bg_base },
@@ -369,6 +370,9 @@ function M.build_from_palette(palette)
     Title = { fg = c.black, bold = true },
     Question = { fg = c.ult_5 },
     RenderMarkdownCode = { bg = c.wht_7 },
+
+    -- lsp
+    LspCodeLens = { fg = c.shd_7 },
   }
 
   -- PLUGIN SPECIFIC
