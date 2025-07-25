@@ -46,17 +46,6 @@ H = {} -- highlights definitions
 ---@type SignTable
 S = {} -- signs definitions
 
-local function u(...)
-  local result = {}
-  local tables = { ... }
-  for _, t in ipairs(tables) do
-    for k, v in pairs(t) do
-      result[k] = v
-    end
-  end
-  return result
-end
-
 function M.build_from_palette(palette)
   local c = palette.colors
 
@@ -69,6 +58,7 @@ function M.build_from_palette(palette)
 
     -- THEME
     bg_base = c.bg_3,
+    bg_alt = c.bg_1,
     bg_editable = c.bg,
 
     bg_tree_selected = c.hlbg_7,
@@ -77,7 +67,6 @@ function M.build_from_palette(palette)
     bg_entry = c.wht_4,
 
     text_lowkey = c.fg_light,
-    text = c.fg,
     text_focus = c.black,
     text_tag = c.tone_5, -- labels, identifiers, enums
     text_tag_alt = c.tone_1, -- alternate tag when several types of tags are present
@@ -92,6 +81,12 @@ function M.build_from_palette(palette)
     bg_success = c.hl_5,
     bg_missing = c.bg_darker,
 
+    text = {
+      infobox = { bg = c.wht_7 },
+      entry = { bg = c.wht_5 },
+      results = { bg = c.wht_2 },
+    },
+
     diff = {
       plus = c.hl_5,
       change = c.hl_7,
@@ -99,15 +94,28 @@ function M.build_from_palette(palette)
       delete = c.bg_darker,
     },
 
-    diag = {
-      ok = c.hl_6,
-      hint = c.hlbg_7,
-      minor = c.tint_5,
+    diff_subtle = {
+      plus = c.hlbg_5,
+      change = c.hlbg_7,
+      minus = c.hlbg_2,
+      delete = c.bg_darker,
+    },
 
-      warn = c.hyperhl_3,
-      warn_inline = c.hl_3,
-      err = c.hyperhl_2,
-      err_inline = c.hl_2,
+    diag = {
+      bg = {
+        ok = c.hl_6,
+        minor = c.tint_5,
+        hint = c.bg_7,
+        warn = c.hyperhl_3,
+        err = c.hyperhl_2,
+      },
+      ul = {
+        ok = c.hl_6,
+        minor = c.tint_5,
+        hint = c.shd_7,
+        warn = c.hyperhl_3,
+        err = c.hyperhl_2,
+      },
     },
   }
 
@@ -121,7 +129,8 @@ function M.build_from_palette(palette)
     metadata = { fg = c.ult_1 },
     label = { fg = c.ult_2, bold = true },
     namespace = { fg = c.tint_3 },
-    macro = { fg = c.ult_4 },
+    lifetime = { fg = c.tint_1, italic = true },
+    macro = { fg = c.pri_0, bold = true },
     -- punctuation
     -- this is defined semantically, not literally
     punc = {
@@ -165,10 +174,10 @@ function M.build_from_palette(palette)
       -- TODO should member not be a mod?
       param = { fg = c.pri_4 },
       member = { fg = c.pri_1 },
-      constant = { fg = c.ult_5 },
+      constant = { fg = c.pri_5 },
       enum_member = { fg = c.ult_1 },
       -- TODO add closure
-      captured = { fg = c.pri_2 }, -- as in by a closure
+      captured = { fg = c.pri_3 }, -- as in by a closure
     },
     -- string like, muted greenish tones all round
     str = {
@@ -194,7 +203,6 @@ function M.build_from_palette(palette)
     -- LSP
     -- lsp mods
     ["@lsp.mod.builtin"] = hl.mod.builtin,
-    ["@lsp.mod.defaultLibrary"] = hl.mod.builtin,
     -- TODO this doesn't work, need to use a callback to handle it properly!
     -- or better, fix upstream
     -- ['@lsp.mod.definition'] = { bold = false },
@@ -280,6 +288,7 @@ function M.build_from_palette(palette)
     Tag = "@lsp.type.keyword",
     Delimiter = { fg = c.fg_light }, -- unobtrusive
 
+    LspReferenceText = "LspReferenceRead",
     LspReferenceRead = { bg = c.hl_0 },
     LspReferenceWrite = { bg = c.hl_5 },
     LspSignatureActiveParameter = { bg = c.hl_6 },
@@ -365,6 +374,11 @@ function M.build_from_palette(palette)
     -- JAVA
     ["@lsp.type.modifier.java"] = hl.keyword,
 
+    -- RUST
+    -- everything in rust is a struct so we spread the colors out to make it less red
+    ["@lsp.type.struct.rust"] = hl.cls.class,
+    -- ["@lsp.type.selfKeyword.rust"] = hl.var.captured,
+
     -- yaml
     ["@property.yaml"] = { fg = c.black, bold = true },
     ["@string.yaml"] = { fg = c.tone_3 },
@@ -392,7 +406,7 @@ function M.build_from_palette(palette)
     Underlined = { underline = true },
 
     -- separators
-    WinSeparator = { fg = c.dbg_3, bg = c.dbg_3 },
+    WinSeparator = { fg = c.shd_3, bg = c.shd_3 },
 
     -- TODO move to THEME??
     Identifier = { link = "Normal" },
@@ -423,7 +437,7 @@ function M.build_from_palette(palette)
 
     -- left of screen, gutter, and cursor rows
     LineNr = { fg = c.fg_light, bg = sc.bg_base },
-    CursorLine = { bg = c.wht_4 },
+    CursorLine = { bg = c.bg_4 },
     CursorLineNR = { fg = c.tone_1, bg = sc.bg_base, bold = true },
     FoldColumn = { fg = sc.nav_guide_lowkey, bg = sc.bg_base },
     SignColumn = { link = "FoldColumn" },
@@ -438,7 +452,7 @@ function M.build_from_palette(palette)
 
     -- TODO need semantic indirection here a lot of duplication happening
     -- popups and modals
-    NormalFloat = { bg = c.bg_2 },
+    NormalFloat = { bg = c.wht_2 },
     FloatBorder = { bg = c.bg_2 },
     FloatTitle = { bg = c.bg_2 },
     FloatFooter = { bg = c.bg_2 },
@@ -448,50 +462,52 @@ function M.build_from_palette(palette)
     QuickFixLine = { bg = c.hlbg_7, bold = true },
 
     -- selection, folded, search and match highlights
-    Visual = { bg = c.hl_0 },
+    Visual = { bg = c.hyperhl_7 },
     Folded = { fg = c.fg_light, bg = c.bg_7 },
     MatchParen = { bg = c.hl_7 },
     Search = { bg = c.hl_4 },
 
-    -- diagnostics
-    DiagnosticError = { fg = c.black, bg = sc.diag.err, bold = true },
-    DiagnosticWarn = { fg = c.fg, bg = sc.diag.warn },
-    DiagnosticInfo = { fg = c.fg, bg = sc.diag.info },
-    DiagnosticHint = { fg = c.fg_light, bg = sc.bg_base },
-    DiagnosticOK = { fg = c.fg, bg = sc.diag.ok },
-
-    -- floating
-    DiagnosticFloatingError = { fg = c.black, sp = sc.diag.err }, -- no bold
-
-    -- use underline for minor cases, otherwise highlight
-    DiagnosticUnderlineError = { sp = sc.diag.err, undercurl = true },
-    DiagnosticUnderlineWarn = { sp = sc.diag.warn, undercurl = true },
-    DiagnosticUnderlineInfo = { sp = sc.diag.info, underline = true },
-    DiagnosticUnderlineHint = { sp = sc.diag.hint, underline = true },
-    DiagnosticUnnecessary = { fg = c.fg_light, sp = sc.diag.minor, undercurl = true },
+    -- DIAGNOSTICS
+    -- errors
+    DiagnosticError = { fg = c.black, bg = sc.diag.bg.err, bold = true },
+    DiagnosticUnderlineError = { sp = sc.diag.ul.err, undercurl = true },
+    DiagnosticFloatingError = { fg = c.black, sp = sc.diag.ul.err }, -- no bold
+    -- warnings
+    DiagnosticWarn = { fg = c.fg, bg = sc.diag.bg.warn },
+    DiagnosticUnderlineWarn = { sp = sc.diag.ul.warn, undercurl = true },
     WarningMsg = { fg = c.hyper_2 },
-    -- debugging
+    -- info
+    DiagnosticInfo = { fg = c.fg, bg = sc.diag.bg.info },
+    DiagnosticUnderlineInfo = { sp = sc.diag.ul.info, underline = true },
+    -- hints
+    DiagnosticHint = { fg = c.fg, bg = sc.diag.bg.hint },
+    DiagnosticUnderlineHint = { sp = sc.diag.ul.hint, underline = true },
+    -- ok
+    DiagnosticOK = { fg = c.fg, bg = sc.diag.bg.ok },
+    -- misc
+    DiagnosticUnnecessary = { fg = c.fg_light, sp = sc.diag.ul.minor, undercurl = true },
+
+    -- DEBUGGING
     Breakpoint = { fg = c.hyper_2, bold = true, bg = c.wht_6 },
     BreakpointCondition = { fg = c.hyper_1, bold = true, bg = c.wht_6 },
 
-    -- diffs
+    -- DIFFS
     DiffAdd = { bg = sc.diff_plus },
-    DiffDelete = { bg = c.bg_darker },
-    DiffChange = { bg = c.hl_7 },
+    DiffDelete = { bg = sc.diff_delete },
+    DiffChange = { bg = sc.diff.change },
     DiffText = "DiffChange",
 
-    ["@diff.plus"] = { bg = c.hl_5 },
-    ["@diff.delta"] = { bg = c.hl_7 },
-    ["@diff.minus"] = { bg = c.hl_2 },
+    ["@diff.plus"] = { bg = sc.diff.plus },
+    ["@diff.delta"] = { bg = sc.diff.change },
+    ["@diff.minus"] = { bg = sc.diff.minus },
 
     -- file navigation
     Directory = { fg = sc.nav_dir },
 
     -- Markdown et al
-    ["@markup.raw"] = { bg = c.wht_7 }, -- stop the garishness!
+    ["@markup.raw"] = {}, -- stop the garishness!
     Title = { fg = c.black, bold = true },
     Question = { fg = c.ult_5 },
-    RenderMarkdownCode = { bg = c.wht_7 },
 
     -- lsp
     LspCodeLens = { fg = c.shd_7 },
@@ -503,22 +519,20 @@ function M.build_from_palette(palette)
     MasonHighlight = { fg = c.pri_0 },
   }
 
-  H.avante = {
-    -- TODO avante diff resolution
-    AvanteTitle = { fg = c.black, bg = sc.bg_base, bold = true },
-    AvanteSubtitle = { fg = c.black, bg = sc.bg_base },
-    AvanteThirdTitle = { fg = c.fg, bg = sc.bg_base },
-    AvanteReversedTitle = "AvanteTitle",
-    AvanteReversedSubtitle = "AvanteSubtitle",
-    AvanteReversedThirdTitle = "AvanteThirdTitle",
-    AvantePopupHint = "Comment",
-    AvanteInlineHint = { fg = c.fg_light },
+  -- snacks
+  H.snacks = {
+    SnacksInputNormal = sc.text.entry,
+    SnacksInputBorder = "FloatBorder",
+    SnacksInputTitle = "FloatTitle",
   }
 
   -- telescope
   H.telecope = {
-    TelescopeNormal = { fg = c.fg_dark, bg = c.wht_4 },
-    TelescopeMatching = { bold = true, bg = c.hl_4 },
+    TelescopeBorder = "FloatBorder",
+    TelescopeNormal = sc.text.results,
+    TelescopeSelection = { fg = c.black, bg = c.hl_7 },
+    TelescopeMatching = { bold = true, bg = c.hl_3 },
+    TelescopePrompt = sc.text.entry,
   }
 
   -- nvim-tree
@@ -542,6 +556,9 @@ function M.build_from_palette(palette)
 
   -- neogit
   H.neogit_highlights = {
+
+    NeogitNormal = "NormalFloat",
+
     -- branch-like
     NeogitBranch = { fg = c.black, underline = true },
     NeogitRemote = { fg = c.tone_2, underline = true },
@@ -564,24 +581,33 @@ function M.build_from_palette(palette)
     NeogitCommitViewHeader = { fg = c.fg_dark, bg = c.hl_7 },
     NeogitCommitViewDescription = { fg = c.fg_dark, bold = true },
 
-    -- TODO fix this up
-    NeogitDiffAdd = { fg = c.fg_dark, bg = c.hl_5 },
-    NeogitDiffAddCursor = { fg = c.fg_dark, bg = c.hl_5 },
-    NeogitDiffAddHighlight = { fg = c.fg_dark, bg = c.hl_5 },
-    NeogitDiffAdditions = { bg = c.hl_5, fg = c.fg_dark },
-    NeogitDiffContext = { bg = sc.bg_base },
-    NeogitDiffContextCursor = { bg = sc.bg_base },
-    NeogitDiffContextHighlight = { bg = sc.bg_base },
-    NeogitDiffDelete = { fg = c.fg_light, bg = c.hl_2 },
-    NeogitDiffDeleteCursor = { fg = c.fg_dark, bg = c.hl_2 },
-    NeogitDiffDeleteHighlight = { fg = c.fg_dark, bg = c.hl_2 },
-    NeogitDiffDeletions = { bg = c.hl_2, fg = c.fg_dark },
-    NeogitDiffHeader = { fg = c.pri_5, bg = sc.bg_base, bold = true },
-    NeogitDiffHeaderHighlight = { fg = c.pri_4, bg = sc.bg_base, bold = true },
+    -- diff preview
+    NeogitDiffHeader = { fg = c.black, bg = c.bg_2, bold = true },
+    NeogitDiffHeaderHighlight = "NeogitDiffHeader",
 
-    NeogitFilePath = { fg = c.pri_5 },
+    NeogitHunkHeader = { fg = c.black, bg = c.bg_2 },
+    NeogitHunkHeaderHighlight = "NeogitHunkHeader",
+    NeogitHunkHeaderCursor = "NeogitHunkHeaderHighlight",
+
+    NeogitDiffContext = sc.text.infobox,
+    NeogitDiffContextCursor = sc.text.infobox,
+    NeogitDiffContextHighlight = sc.text.infobox,
+
+    -- TODO still seeing changes in response to cursor... need to fing hidden groups
+    NeogitDiffAdd = { fg = c.fg_dark, bg = sc.diff_subtle.plus },
+    NeogitDiffAddCursor = "NeogitDiffAdd",
+    NEogitDiffAddHighlight = "NeogitDiffAdd",
+    NeogitDiffAdditions = "NeogitDiffAdd",
+
+    NeogitDiffDelete = { fg = c.fg_light, bg = sc.diff_subtle.minus },
+    NeogitDiffDeleteCursor = "NeogitDiffDelete",
+    NeogitDiffDeleteHighlight = "NeogitDiffDelete",
+    NeogitDiffDeletions = "NeogitDiffDelete",
+
+    NeogitFilePath = { fg = c.pri_5, bold = true },
     NeogitFloatHeader = { bg = c.bg_dark, bold = true },
     NeogitFloatHeaderHighlight = { fg = c.pri_5, bg = sc.bg_base, bold = true },
+
     NeogitGraphAuthor = { fg = c.tone_2 },
     NeogitGraphBlue = { fg = c.tone_5 },
     NeogitGraphBoldBlue = { fg = c.pri_5, bold = true },
@@ -601,12 +627,6 @@ function M.build_from_palette(palette)
     NeogitGraphRed = { fg = c.pri_1 },
     NeogitGraphWhite = { fg = c.white },
     NeogitGraphYellow = { fg = c.tone_2 },
-    NeogitHunkHeader = { fg = c.fg_dark, bg = c.hl_7, bold = true },
-    NeogitHunkHeaderCursor = { fg = c.fg_dark, bg = c.hl_0, bold = true },
-    NeogitHunkHeaderHighlight = { fg = c.fg_dark, bg = c.hl_0, bold = true },
-    NeogitHunkMergeHeader = { fg = c.fg_dark, bg = c.hl_7, bold = true },
-    NeogitHunkMergeHeaderCursor = { fg = c.fg_dark, bg = c.hl_7, bold = true },
-    NeogitHunkMergeHeaderHighlight = { fg = c.fg_dark, bg = c.hl_0, bold = true },
     NeogitPopupBold = { bold = true },
     NeogitPopupActionKey = { fg = c.ult_1, bold = true },
     NeogitPopupConfigKey = "NeogitPopupActionKey",
@@ -637,6 +657,7 @@ function M.build_from_palette(palette)
     NeotestExpandMarker = "Normal",
     NeotestWinSelect = "Normal",
   }
+
   -- dapui
   H.dapui_highlights = {
     DapUIScope = { fg = c.pri_4 },
