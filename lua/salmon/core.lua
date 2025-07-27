@@ -493,7 +493,7 @@ function M.build_from_palette(palette)
 
     -- DIFFS
     DiffAdd = { bg = sc.diff_plus },
-    DiffDelete = { bg = sc.diff_delete },
+    DiffDelete = { bg = sc.diff.delete },
     DiffChange = { bg = sc.diff.change },
     DiffText = "DiffChange",
 
