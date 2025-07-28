@@ -117,6 +117,11 @@ function M.build_from_palette(palette)
         err = c.hyperhl_2,
       },
     },
+
+    hint = {
+      faint = { fg = c.shd_7 },
+      inlay = { fg = c.fg_light, italic = true },
+    },
   }
 
   -- then we define our highlighting scheme at a high level
@@ -288,10 +293,15 @@ function M.build_from_palette(palette)
     Tag = "@lsp.type.keyword",
     Delimiter = { fg = c.fg_light }, -- unobtrusive
 
+    -- Hints and similar (mostly LSP)
+    LspCodeLens = sc.hint.faint,
+    LspInlayHint = sc.hint.inlay,
+
+    LspSignatureActiveParameter = { underline = true, bold = true, sp = c.black },
+
     LspReferenceText = "LspReferenceRead",
     LspReferenceRead = { bg = c.hl_0 },
     LspReferenceWrite = { bg = c.hl_5 },
-    LspSignatureActiveParameter = { bg = c.hl_6 },
 
     -- TREESITTER
     -- note: most of these should be defined in links pointing back to LSP
@@ -441,6 +451,8 @@ function M.build_from_palette(palette)
     CursorLineNR = { fg = c.tone_1, bg = sc.bg_base, bold = true },
     FoldColumn = { fg = sc.nav_guide_lowkey, bg = sc.bg_base },
     SignColumn = { link = "FoldColumn" },
+
+    -- TODO move to semantic table, not fake groups
     -- create new generic group that any plugin can be configured to use
     IndentGuide = { fg = c.bg_2 },
     SignatureMarkText = { fg = c.hyper_0, bold = true, standout = true, bg = c.wht_0 },
@@ -456,10 +468,11 @@ function M.build_from_palette(palette)
     FloatBorder = { bg = c.bg_2 },
     FloatTitle = { bg = c.bg_2 },
     FloatFooter = { bg = c.bg_2 },
+    QuickFixLine = { bg = c.hlbg_7, bold = true },
+
     Pmenu = { fg = c.fg, bg = c.bg_7 },
     PmenuSel = { fg = c.fg, bg = c.wht_6 },
     PmenuThumb = { fg = c.fg, bg = sc.bg_base },
-    QuickFixLine = { bg = c.hlbg_7, bold = true },
 
     -- selection, folded, search and match highlights
     Visual = { bg = c.hyperhl_7 },
@@ -492,10 +505,11 @@ function M.build_from_palette(palette)
     BreakpointCondition = { fg = c.hyper_1, bold = true, bg = c.wht_6 },
 
     -- DIFFS
-    DiffAdd = { bg = sc.diff_plus },
-    DiffDelete = { bg = sc.diff.delete },
-    DiffChange = { bg = sc.diff.change },
-    DiffText = "DiffChange",
+    DiffAdd = { bg = sc.diff_subtle.plus },
+    DiffDelete = { bg = sc.diff_subtle.delete },
+    DiffChange = { bg = sc.diff_subtle.change },
+    DiffTextAdd = { bg = sc.diff.add },
+    DiffText = { bg = sc.diff.change },
 
     ["@diff.plus"] = { bg = sc.diff.plus },
     ["@diff.delta"] = { bg = sc.diff.change },
@@ -508,12 +522,42 @@ function M.build_from_palette(palette)
     ["@markup.raw"] = {}, -- stop the garishness!
     Title = { fg = c.black, bold = true },
     Question = { fg = c.ult_5 },
-
-    -- lsp
-    LspCodeLens = { fg = c.shd_7 },
   }
 
   -- PLUGIN SPECIFIC
+  -- nvim-cmp
+  H.cmp = {
+    -- Pmenu items
+    -- TODO this is ridiculous need to auto-generate
+    -- CmpItemAbbr = { fg = c.fg_dark, bg = sc.bg_base },
+    -- CmpItemAbbrMatch = { fg = c.black, bg = c.hl_3, bold = true },
+    -- CmpItemAbbrMatchFuzzy = { fg = c.black, bg = c.hl_3, bold = true },
+    CmpItemKindConstant = "@lsp.type.constant",
+    CmpItemKindText = "Normal",
+    CmpItemKindMethod = "@lsp.type.method",
+    CmpItemKindFunction = "@lsp.type.function",
+    CmpItemKindConstructor = "@lsp.type.class",
+    CmpItemKindField = "@lsp.type.property",
+    CmpItemKindVariable = "@lsp.type.variable",
+    CmpItemKindClass = "@lsp.type.class",
+    CmpItemKindStruct = "@lsp.type.struct",
+    CmpItemKindEnum = "@lsp.type.enum",
+    CmpItemKindInterface = "@lsp.type.interface",
+    CmpItemKindModule = "@lsp.type.namespace",
+    CmpItemKindProperty = "@lsp.type.property",
+    CmpItemKindUnit = { fg = c.pri_4 },
+    CmpItemKindValue = { fg = c.pri_5 },
+    CmpItemKindEnumMember = "@lsp.type.enumMember",
+    CmpItemKindKeyword = "Keyword",
+    CmpItemKindSnippet = "Parameter",
+    CmpItemKindFile = "File",
+    CmpItemKindFolder = "Directory",
+    -- doc items
+    -- winhighlight = 'FloatNormal:CmpDoc,FloatBorder:CmpDocBorder',
+    CmpDoc = sc.text.infobox,
+    CmpDocBorder = sc.text.infobox, -- looks better with no frills
+  }
+
   -- mason
   H.mason = {
     MasonHighlight = { fg = c.pri_0 },
@@ -599,7 +643,7 @@ function M.build_from_palette(palette)
     NEogitDiffAddHighlight = "NeogitDiffAdd",
     NeogitDiffAdditions = "NeogitDiffAdd",
 
-    NeogitDiffDelete = { fg = c.fg_light, bg = sc.diff_subtle.minus },
+    NeogitDiffDelete = { fg = c.fg_light, bg = sc.diff_subtle.delete },
     NeogitDiffDeleteCursor = "NeogitDiffDelete",
     NeogitDiffDeleteHighlight = "NeogitDiffDelete",
     NeogitDiffDeletions = "NeogitDiffDelete",
@@ -706,11 +750,14 @@ function M.build_from_palette(palette)
 
   -- diffview
   H.diffview = {
-    DiffViewSecondary = { fg = c.pri_1 },
-    DiffViewFilePanelTitle = { bold = true },
-    DiffViewFilePanelCounter = "Number",
+    DiffviewSecondary = { fg = c.pri_1 },
+    DiffviewFilePanelTitle = { bold = true },
+    DiffviewFilePanelCounter = "Number",
     DiffviewFilePanelFileName = { fg = c.fg },
-    DiffViewFilePanelSelected = { fg = c.black, bg = sc.bg_tree_selected },
+    DiffviewFilePanelSelected = { fg = c.black, bg = sc.bg_tree_selected },
+    -- extra groups for use with  enhanced_diff_hl = true
+    DiffviewDiffAddAsDelete = { bg = sc.diff_subtle.delete.bg },
+    DiffviewDiffDelete = { bg = sc.diff.delete.bg },
   }
 
   -- trouble
