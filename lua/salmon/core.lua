@@ -98,7 +98,7 @@ function M.build_from_palette(palette)
       plus = c.hlbg_5,
       change = c.hlbg_7,
       minus = c.hlbg_2,
-      delete = c.bg_darker,
+      delete = c.bg_dark,
     },
 
     diag = {
@@ -756,8 +756,9 @@ function M.build_from_palette(palette)
     DiffviewFilePanelFileName = { fg = c.fg },
     DiffviewFilePanelSelected = { fg = c.black, bg = sc.bg_tree_selected },
     -- extra groups for use with  enhanced_diff_hl = true
-    DiffviewDiffAddAsDelete = { bg = sc.diff_subtle.delete.bg },
-    DiffviewDiffDelete = { bg = sc.diff.delete.bg },
+    DiffviewDiffDelete = { bg = sc.diff.delete },
+    DiffviewDiffAddAsDelete = { bg = sc.diff.delete },
+    DiffviewDiffDeleteDim = { bg = sc.diff_subtle.delete, fg = c.fg_light },
   }
 
   -- trouble
