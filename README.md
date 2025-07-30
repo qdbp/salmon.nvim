@@ -22,7 +22,8 @@ I also have pretty decent plugin coverage.
 
 ## Examples
 
-![code example 1](media/salmon_nvim_1.png)
+![code example 1](media/salmon_nvim_4.png)
+![code example 2](media/salmon_nvim_1.png)
 ![neogit example](media/salmon_nvim_2.png)
 ![dap ui example](media/salmon_nvim_3.png)
 
